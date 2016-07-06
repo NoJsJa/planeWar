@@ -26,6 +26,8 @@
 @property NSTimer *planeActionTimer;
 //弹药道具移动的计时器
 @property NSTimer *itemMoveTimer;
+//弹药加成的定时器
+@property NSTimer *bulletUpgradeTimer;
 //爆炸动画数组
 @property NSMutableArray *explodeArr;
 //弹药加成道具

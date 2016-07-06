@@ -56,11 +56,10 @@
     [self changePlane];
     
     //让飞机发射炮弹,敌机开始攻击
-    self.planeActionTimer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(planeAction) userInfo:nil repeats:YES];
+    self.planeActionTimer = [NSTimer scheduledTimerWithTimeInterval:0.025 target:self selector:@selector(planeAction) userInfo:nil repeats:YES];
     
     [self changeItemDirection];
-    //弹药的道具开始移动
-    self.itemMoveTimer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(itemAction) userInfo:nil repeats:YES];
+    
     return YES;
 }
 
@@ -150,13 +149,27 @@
 
 //飞机的动作
 -(void)planeAction{
+    static int tag = 0;
+    tag++;
     //碰撞检测
     [self collision_detection];
-    [self shoot];
+    if (tag % 4 == 0) {
+        [self shoot];
+    }
+    
     [self bulletMove];
     
-    [self enemyStartAttack];
-    [self enemyMove];
+    if (tag % 4 == 0) {
+        
+        [self enemyStartAttack];
+    }
+    
+    if (tag % 2 == 0) {
+        [self enemyMove];
+    }
+    
+    
+    tag = tag >= 1000 ? 0 : tag;
     
 }
 
@@ -238,6 +251,14 @@
             view.frame = enemy;
             [view startAnimating];
             [self.window addSubview:view];
+            //出现火球
+            if (view.tag == 1 && !isItemExit && !isItemAdded) {
+                self.item.frame = view.frame;
+                [self.window addSubview:self.item];
+                self.itemMoveTimer = [NSTimer scheduledTimerWithTimeInterval:0.025 target:self selector:@selector(itemAction) userInfo:nil repeats:YES];
+                isItemExit = YES;
+                
+            }
             break;
         }
     }
@@ -268,7 +289,7 @@
     }
     
     //敌机变换位置
-    image.frame = CGRectMake(arc4random()%320,10, 20, 20);
+    image.frame = CGRectMake(arc4random()%(310 - 10) + 10,10, 20, 20);
     [self.window addSubview:image];
     image.tag = 1;
     if (enemyNum == 100) {
@@ -282,7 +303,7 @@
     for (int i = 0; i < 100; i++) {
         UIImageView *image = (UIImageView *)self.enemyArr[i];
         if (image.tag == 1) {
-            image.frame = CGRectMake(image.frame.origin.x, image.frame.origin.y + 7.5, 20, 20);
+            image.frame = CGRectMake(image.frame.origin.x, image.frame.origin.y + 4, 20, 20);
             if (image.frame.origin.y >= 480) {
                 image.tag = 0;
                 [image removeFromSuperview];
@@ -297,7 +318,7 @@
     self.item = [[UIImageView alloc] init];
     self.item.frame = CGRectMake(160 - 10, 240 - 10, 20, 20);
     self.item.image = [UIImage imageNamed:@"fireball.png"];
-    [self.window addSubview:self.item];
+
 }
 
 /*-----------------弹药加成的道具--------------------*/
@@ -305,11 +326,16 @@
 //弹药道具运行的方向差
 static int dx;
 static int dy;
+//标记火球是否在屏幕上
+static BOOL isItemExit = NO;
+//标记是否是加成状态
+static BOOL isItemAdded = NO;
 
 //弹药道具的动作
 -(void)itemAction{
     [self itemMove];
     [self isKnock];
+    [self item_detection];
 }
 
 //弹药加成的道具在屏幕上来回弹动
@@ -323,18 +349,43 @@ static int dy;
     
     if ((self.item.frame.origin.x - 10 <= 0) || (self.item.frame.origin.x + 10 >= 320)){
         dx = -dx;
-        self.item.frame = CGRectMake(self.item.frame.origin.x + dx , self.item.frame.origin.y, 20, 20);
     }else if((self.item.frame.origin.y - 10 <= 0) || (self.item.frame.origin.y + 10 >= 480)){
         dy = -dy;
-        self.item.frame = CGRectMake(self.item.frame.origin.x, self.item.frame.origin.y + dy, 20, 20);
     }
 }
 
 //改变弹药道具的运行方向
 -(void)changeItemDirection{
     
-    dx = 10;
-    dy = 7;
+    dx = 5;
+    dy = 3.5;
+}
+
+//弹药道具碰撞检测
+-(void)item_detection{
+    //判断是否和自己的飞机碰撞
+    if (CGRectIntersectsRect(self.planeView.frame, self.item.frame) && (isItemExit)) {
+        [self.item removeFromSuperview];
+        [self.itemMoveTimer invalidate];
+        
+        self.bulletUpgradeTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(bullet_upgrade) userInfo:nil repeats:YES];
+        isItemExit = NO;
+        isItemAdded = YES;
+    }
+}
+
+-(void)bullet_upgrade{
+    static int i = 0;
+    i++;
+    if (i >= 200) {
+        self.laserBullet.frame = CGRectMake(self.planeView.frame.origin.x + 15 - 1, self.planeView.frame.origin.y - 15 - 480, 2, 480);
+        [self.bulletUpgradeTimer invalidate];
+        isItemAdded = NO;
+        i = 0;
+    }else{
+        self.laserBullet.frame = CGRectMake(self.planeView.frame.origin.x + 15 - 20, self.planeView.frame.origin.y - 15 - 480, 40, 480);
+    }
+    
 }
 
 /*------------------道具的移动-------------------*/
@@ -368,6 +419,13 @@ static int dy;
     [bzImgArr addObject:[UIImage imageNamed:@"bz5.png"]];
     for (int i = 0; i < 30; i++) {
         UIImageView *imageView = [[UIImageView alloc] init];
+        //弹药的标记参数，几率为1/6
+        if((arc4random()%100 + 1) <= 20){
+            imageView.tag = 1;
+        }else{
+            imageView.tag = 0;
+        }
+        
         imageView.animationImages = bzImgArr;
         imageView.animationDuration = 0.5;
         imageView.animationRepeatCount = 1;
