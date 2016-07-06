@@ -44,15 +44,23 @@
     [self buildEnemyPlane];
     //初始化炮弹
     [self initBullet];
+    //创建爆炸数组
+    [self buildExplodeArr];
+    //创建弹药的item
+    [self shootItem];
     //设置定时器让背景图片循环滚动
-    [NSTimer scheduledTimerWithTimeInterval:0.04 target:self selector:@selector(scrollImage) userInfo:nil repeats:YES];
+    self.backgroundTimer = [NSTimer scheduledTimerWithTimeInterval:0.04 target:self selector:@selector(scrollImage) userInfo:nil repeats:YES];
+    
     
     //让飞机的火焰图片变换
     [self changePlane];
     
     //让飞机发射炮弹,敌机开始攻击
-    [NSTimer scheduledTimerWithTimeInterval:0.2 target:self selector:@selector(planeAction) userInfo:nil repeats:YES];
+    self.planeActionTimer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(planeAction) userInfo:nil repeats:YES];
     
+    [self changeItemDirection];
+    //弹药的道具开始移动
+    self.itemMoveTimer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(itemAction) userInfo:nil repeats:YES];
     return YES;
 }
 
@@ -131,7 +139,7 @@
 //创建敌机
 -(void)buildEnemyPlane{
     self.enemyArr = [[NSMutableArray alloc] init];
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 100; i++) {
         UIImageView *enemy = [[UIImageView alloc] init];
         enemy.image = [UIImage imageNamed:@"diji.png"];
         //没开始进攻的敌机标志位0
@@ -142,15 +150,103 @@
 
 //飞机的动作
 -(void)planeAction{
+    //碰撞检测
+    [self collision_detection];
     [self shoot];
     [self bulletMove];
     
     [self enemyStartAttack];
     [self enemyMove];
+    
 }
+
+//飞机和子弹的碰撞检测
+-(void)collision_detection{
+    [self detection:self.bulletArr];
+    [self detection:self.bulletArr2];
+}
+
+//碰撞检测函数
+-(void)detection : (NSMutableArray *)bulletArr{
+    for (int i = 0; i < 50; i++) {
+        UIImageView *bulletView = (UIImageView *)bulletArr[i];
+        if (bulletView.tag == 0) {
+            continue;
+        }
+        //检测每一颗子弹与敌机是否碰撞
+        for (int j = 0; j < 100; j++) {
+            
+            UIImageView *enemyView = (UIImageView *)self.enemyArr[j];
+            if (enemyView.tag == 0) {
+                continue;
+            }
+            //检测激光
+            if (CGRectIntersectsRect(self.laserBullet.frame, enemyView.frame)) {
+                
+                [self enemyExplode:enemyView.frame];
+                [enemyView removeFromSuperview];
+                enemyView.tag = 0;
+                continue;
+            }
+            //检测子弹
+            if (CGRectIntersectsRect(bulletView.frame, enemyView.frame)) {
+                [bulletView removeFromSuperview];
+                [self enemyExplode:enemyView.frame];
+                [enemyView removeFromSuperview];
+                
+                bulletView.tag = 0;
+                enemyView.tag = 0;
+                continue;
+                
+            }
+            //检测敌机与自己
+            if (CGRectIntersectsRect(self.planeView.frame, enemyView.frame)){
+                
+                [self.planeView removeFromSuperview];
+                [self.laserBullet removeFromSuperview];
+                [self.backgroundTimer invalidate];
+                [self.planeActionTimer invalidate];
+                //让屏幕上的子弹消失
+                for (int i = 0; i < 50; i++) {
+                    UIImageView *bulletView = self.bulletArr[i];
+                    UIImageView *bulletView2 = self.bulletArr2[i];
+                    if (bulletView.tag == 1) {
+                        [bulletView removeFromSuperview];
+                        bulletView.tag = 0;
+                    }
+                    if (bulletView2.tag == 1) {
+                        [bulletView2 removeFromSuperview];
+                        bulletView2.tag = 0;
+                    }
+                    
+                }
+            }
+        }
+        
+        
+    }
+}
+
+//敌机爆炸的函数
+-(void)enemyExplode :(CGRect)enemy {
+    
+    for (int i= 0; i < 30; i++) {
+        UIImageView *view = (UIImageView *)self.explodeArr[i];
+        if ([view isAnimating]) {
+            continue;
+        }else{
+            view.frame = enemy;
+            [view startAnimating];
+            [self.window addSubview:view];
+            break;
+        }
+    }
+}
+
 
 //敌机的动作
 -(void)enemyAction{
+
     [self enemyStartAttack];
     [self enemyMove];
 }
@@ -166,7 +262,7 @@
             break;
         }
         enemyNum ++;
-        if (enemyNum == 50) {
+        if (enemyNum == 100) {
             enemyNum = 0;
         }
     }
@@ -175,7 +271,7 @@
     image.frame = CGRectMake(arc4random()%320,10, 20, 20);
     [self.window addSubview:image];
     image.tag = 1;
-    if (enemyNum == 50) {
+    if (enemyNum == 100) {
         enemyNum = 0;
     }
 
@@ -183,10 +279,10 @@
 
 //敌机移动
 -(void)enemyMove{
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 100; i++) {
         UIImageView *image = (UIImageView *)self.enemyArr[i];
         if (image.tag == 1) {
-            image.frame = CGRectMake(image.frame.origin.x, image.frame.origin.y + 15, 20, 20);
+            image.frame = CGRectMake(image.frame.origin.x, image.frame.origin.y + 7.5, 20, 20);
             if (image.frame.origin.y >= 480) {
                 image.tag = 0;
                 [image removeFromSuperview];
@@ -194,6 +290,54 @@
         }
     }
 }
+
+//创建弹药加成的宝贝
+-(void)shootItem{
+    //创建对象
+    self.item = [[UIImageView alloc] init];
+    self.item.frame = CGRectMake(160 - 10, 240 - 10, 20, 20);
+    self.item.image = [UIImage imageNamed:@"fireball.png"];
+    [self.window addSubview:self.item];
+}
+
+/*-----------------弹药加成的道具--------------------*/
+
+//弹药道具运行的方向差
+static int dx;
+static int dy;
+
+//弹药道具的动作
+-(void)itemAction{
+    [self itemMove];
+    [self isKnock];
+}
+
+//弹药加成的道具在屏幕上来回弹动
+-(void)itemMove{
+    
+    self.item.frame = CGRectMake(self.item.frame.origin.x + dx , self.item.frame.origin.y + dy, 20, 20);
+}
+
+//判断是否和四个边界相碰
+-(void)isKnock{
+    
+    if ((self.item.frame.origin.x - 10 <= 0) || (self.item.frame.origin.x + 10 >= 320)){
+        dx = -dx;
+        self.item.frame = CGRectMake(self.item.frame.origin.x + dx , self.item.frame.origin.y, 20, 20);
+    }else if((self.item.frame.origin.y - 10 <= 0) || (self.item.frame.origin.y + 10 >= 480)){
+        dy = -dy;
+        self.item.frame = CGRectMake(self.item.frame.origin.x, self.item.frame.origin.y + dy, 20, 20);
+    }
+}
+
+//改变弹药道具的运行方向
+-(void)changeItemDirection{
+    
+    dx = 10;
+    dy = 7;
+}
+
+/*------------------道具的移动-------------------*/
 
 //创建炮弹的数组，炮弹的tag状态0和1表示炮弹是否在屏幕上，0表示炮弹不在屏幕上，1表示炮弹在屏幕上
 -(void)initBullet{
@@ -213,6 +357,25 @@
     }
 }
 
+//创建爆炸数组
+-(void)buildExplodeArr{
+    self.explodeArr = [[NSMutableArray alloc] init];
+    NSMutableArray *bzImgArr = [[NSMutableArray alloc]init];
+    [bzImgArr addObject:[UIImage imageNamed:@"bz1.png"]];
+    [bzImgArr addObject:[UIImage imageNamed:@"bz2.png"]];
+    [bzImgArr addObject:[UIImage imageNamed:@"bz3.png"]];
+    [bzImgArr addObject:[UIImage imageNamed:@"bz4.png"]];
+    [bzImgArr addObject:[UIImage imageNamed:@"bz5.png"]];
+    for (int i = 0; i < 30; i++) {
+        UIImageView *imageView = [[UIImageView alloc] init];
+        imageView.animationImages = bzImgArr;
+        imageView.animationDuration = 0.5;
+        imageView.animationRepeatCount = 1;
+
+        [self.explodeArr addObject:imageView];
+
+    }
+}
 
 //发射炮弹
 -(void)shoot{

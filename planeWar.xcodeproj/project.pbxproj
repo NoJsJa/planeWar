@@ -27,6 +27,7 @@
 		2C8D09D41D2B91CD008559C5 /* zidan.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C8D09C61D2B91CD008559C5 /* zidan.png */; };
 		2C8D09D51D2B91CD008559C5 /* zidan1.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C8D09C71D2B91CD008559C5 /* zidan1.png */; };
 		2C8D09D61D2B91CD008559C5 /* zidan2.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C8D09C81D2B91CD008559C5 /* zidan2.png */; };
+		2CDF1E5E1D2D288400E7DB9C /* fireball.png in Resources */ = {isa = PBXBuildFile; fileRef = 2CDF1E5D1D2D288400E7DB9C /* fireball.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 		2C8D09C61D2B91CD008559C5 /* zidan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zidan.png; sourceTree = "<group>"; };
 		2C8D09C71D2B91CD008559C5 /* zidan1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zidan1.png; sourceTree = "<group>"; };
 		2C8D09C81D2B91CD008559C5 /* zidan2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zidan2.png; sourceTree = "<group>"; };
+		2CDF1E5D1D2D288400E7DB9C /* fireball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = fireball.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -164,6 +166,7 @@
 		2C8D09BA1D2B91CD008559C5 /* planeImages */ = {
 			isa = PBXGroup;
 			children = (
+				2CDF1E5D1D2D288400E7DB9C /* fireball.png */,
 				2C8D09BB1D2B91CD008559C5 /* bg.png */,
 				2C8D09BC1D2B91CD008559C5 /* bz1.png */,
 				2C8D09BD1D2B91CD008559C5 /* bz2.png */,
@@ -286,6 +289,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CDF1E5E1D2D288400E7DB9C /* fireball.png in Resources */,
 				2C8D09CB1D2B91CD008559C5 /* bz2.png in Resources */,
 				2C8D09941D2B918E008559C5 /* Assets.xcassets in Resources */,
 				2C8D09D11D2B91CD008559C5 /* plane2.png in Resources */,

@@ -20,6 +20,16 @@
 @property NSMutableArray *bulletArr2;
 //镭射子弹
 @property UIImageView *laserBullet;
+//背景定时器
+@property NSTimer *backgroundTimer;
+//飞机动作定时器
+@property NSTimer *planeActionTimer;
+//弹药道具移动的计时器
+@property NSTimer *itemMoveTimer;
+//爆炸动画数组
+@property NSMutableArray *explodeArr;
+//弹药加成道具
+@property UIImageView *item;
 
 @end
 
