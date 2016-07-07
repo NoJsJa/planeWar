@@ -219,6 +219,7 @@
                 [self.laserBullet removeFromSuperview];
                 [self.backgroundTimer invalidate];
                 [self.planeActionTimer invalidate];
+                [self.item removeFromSuperview];
                 //让屏幕上的子弹消失
                 for (int i = 0; i < 50; i++) {
                     UIImageView *bulletView = self.bulletArr[i];
@@ -312,16 +313,18 @@
     }
 }
 
+
+
+/*-----------------弹药加成的道具--------------------*/
+
 //创建弹药加成的宝贝
 -(void)shootItem{
     //创建对象
     self.item = [[UIImageView alloc] init];
     self.item.frame = CGRectMake(160 - 10, 240 - 10, 20, 20);
     self.item.image = [UIImage imageNamed:@"fireball.png"];
-
+    
 }
-
-/*-----------------弹药加成的道具--------------------*/
 
 //弹药道具运行的方向差
 static int dx;
@@ -334,6 +337,7 @@ static BOOL isItemAdded = NO;
 //弹药道具的动作
 -(void)itemAction{
     [self itemMove];
+    [self itemEffect];
     [self isKnock];
     [self item_detection];
 }
@@ -374,6 +378,7 @@ static BOOL isItemAdded = NO;
     }
 }
 
+//镭射弹药更新
 -(void)bullet_upgrade{
     static int i = 0;
     i++;
@@ -386,6 +391,35 @@ static BOOL isItemAdded = NO;
         self.laserBullet.frame = CGRectMake(self.planeView.frame.origin.x + 15 - 20, self.planeView.frame.origin.y - 15 - 480, 40, 480);
     }
     
+}
+
+//弹药道具的尾巴效果
+-(void)itemEffect{
+
+    UIImageView *fireBall = [[UIImageView alloc] init];
+    fireBall.image = [UIImage imageNamed:@"fireball"];
+    fireBall.frame = CGRectMake(self.item.frame.origin.x, self.item.frame.origin.y, 20, 20);
+        [self.window addSubview:fireBall];
+    
+    [UIView beginAnimations:nil context:(__bridge void * _Nullable)(fireBall)];
+    [UIView setAnimationDuration:1];
+    [UIView setAnimationBeginsFromCurrentState:YES];
+
+    //把播放动画的方法委托给主线程,因为要调用主线程的函数
+    [UIView setAnimationDelegate:self];
+    //iOS的委托类似回调函数
+    //[UIView setAnimationDidStopSelector:@selector(afterAnimation :)];
+    
+    //提交动画，动画线程和主线程不同,可以找到非主线程分支
+    fireBall.frame = CGRectMake(self.item.frame.origin.x, self.item.frame.origin.y, 0, 0);
+    [UIView commitAnimations];
+
+}
+
+//从屏幕上移除那个动画
+- (void)animationDidStop:(NSString *)animationID finished:(NSNumber *)finished context:(void *)context{
+    UIImageView *fir=(__bridge UIImageView *)(context);
+    [fir removeFromSuperview];
 }
 
 /*------------------道具的移动-------------------*/
